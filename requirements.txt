@@ -1,0 +1,57 @@
+# Flask Backend
+flask==3.0.0
+flask-cors==4.0.0
+flask-socketio==5.3.6
+python-socketio==5.11.0
+
+# Local AI (Ollama integration)
+ollama==0.1.6
+requests==2.31.0
+
+# Vector Database & RAG
+chromadb==0.4.22
+langchain==0.1.1
+langchain-community==0.0.21
+langchain-ollama==0.1.0
+
+# Text Processing & Embeddings
+sentence-transformers==2.3.1
+transformers==4.37.0
+torch==2.2.0
+torchvision==0.17.0
+numpy==1.26.3
+scipy==1.12.0
+scikit-learn==1.4.0
+
+# PDF Processing
+pymupdf==1.23.8
+pdf2image==1.16.3
+
+# YouTube Processing & Transcription
+yt-dlp==2024.1.26
+openai-whisper==20231117
+
+# Calendar & Scheduling
+python-dateutil==2.8.2
+icalendar==5.0.11
+
+# Visualization Engine (Manim)
+manim==0.18.0
+Pillow==10.2.0
+moviepy==1.0.3
+
+# Database
+sqlite-utils==3.36
+sqlalchemy==2.0.25
+
+# Utilities
+tqdm==4.66.1
+python-dotenv==1.0.0
+click==8.1.7
+rich==13.7.0
+uvicorn==0.27.0
+fastapi==0.109.2
+pydantic==2.5.3
+
+# Electron compatibility (optional)
+websockets==12.0
