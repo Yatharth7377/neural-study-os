@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Study OS</title>
+    <style>
+        :root { --bg:#0a0a0f; --bg2:#12121a; --bg3:#1a1a25; --primary:#8b5cf6; --primary-dark:#6d28d9; --accent:#a855f7; --text:#f0f0f0; --text-dim:#888; --border:#2a2a3a; --success:#22c55e; --warning:#f59e0b; --error:#ef4444; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); overflow:hidden; }
+        .app { display:grid; grid-template-columns:220px 1fr 320px; grid-template-rows:50px 1fr; height:100vh; }
+        .header { grid-column:1/-1; background:var(--bg2); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 20px; }
+        .logo { font-size:1.3rem; font-weight:700; background:linear-gradient(135deg,var(--primary),var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .sidebar { background:var(--bg2); border-right:1px solid var(--border); padding:15px; display:flex; flex-direction:column; gap:8px; }
+        .nav-btn { background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px 15px; border-radius:8px; cursor:pointer; text-align:left; font-size:0.9rem; display:flex; align-items:center; gap:10px; }
+        .nav-btn:hover { background:var(--bg3); color:var(--text); border-color:var(--primary); }
+        .nav-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
+        .main { background:var(--bg); overflow-y:auto; padding:20px; }
+        .panel { background:var(--bg2); border-left:1px solid var(--border); padding:15px; overflow-y:auto; }
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+        input,textarea,select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:6px; width:100%; font-size:0.9rem; }
+        input:focus,textarea:focus { outline:none; border-color:var(--primary); }
+        .btn { background:var(--primary); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:0.85rem; }
+        .btn:hover { background:var(--primary-dark); }
+        .btn-secondary { background:transparent; border:1px solid var(--border); color:var(--text-dim); }
+        .btn-secondary:hover { border-color:var(--primary); color:var(--text); }
+        .card { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:15px; margin-bottom:12px; }
+        .form-group { margin-bottom:12px; }
+        .form-group label { display:block; font-size:0.8rem; color:var(--text-dim); margin-bottom:4px; }
+        .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:20px; }
+        .stat-card { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:15px; text-align:center; }
+        .stat-val { font-size:1.8rem; font-weight:700; background:linear-gradient(135deg,var(--primary),var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .stat-label { font-size:0.75rem; color:var(--text-dim); margin-top:4px; }
+        .chat-container { display:flex; flex-direction:column; height:100%; }
+        .chat-messages { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:12px; }
+        .msg { max-width:85%; padding:10px 14px; border-radius:12px; font-size:0.9rem; line-height:1.4; }
+        .msg-user { background:var(--primary); align-self:flex-end; }
+        .msg-bot { background:var(--bg3); border:1px solid var(--border); align-self:flex-start; }
+        .chat-input { display:flex; gap:8px; padding:10px; border-top:1px solid var(--border); }
+        .chat-input input { flex:1; }
+        .session-item { display:flex; justify-content:space-between; padding:10px; background:var(--bg3); border-radius:6px; margin-bottom:6px; border:1px solid var(--border); }
+        .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.7rem; font-weight:600; }
+        .badge-success { background:rgba(34,197,94,0.2); color:var(--success); }
+        .badge-warning { background:rgba(245,158,11,0.2); color:var(--warning); }
+        .badge-primary { background:rgba(139,92,246,0.2); color:var(--primary); }
+        .progress-bar { height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; margin-top:6px; }
+        .progress-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--accent)); border-radius:3px; }
+        .panel-title { font-size:0.85rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px; }
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background:var(--bg); }
+        ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+        .status-dot { width:8px; height:8px; border-radius:50%; background:var(--error); animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .loading { opacity:0.6; pointer-events:none; }
+        .quiz-option { display:block; padding:8px 12px; margin:4px 0; background:var(--bg3); border:1px solid var(--border); border-radius:6px; cursor:pointer; }
+        .quiz-option:hover { border-color:var(--primary); }
+        .quiz-option.selected { background:var(--primary); border-color:var(--primary); }
+        .flashcard { text-align:center; padding:30px; }
+        .flashcard-q { font-size:1.1rem; margin-bottom:20px; }
+        .flashcard-a { display:none; font-size:1rem; color:var(--text-dim); margin-top:15px; padding-top:15px; border-top:1px solid var(--border); }
+        .flashcard.revealed .flashcard-a { display:block; }
+        .flashcard-actions { margin-top:15px; display:flex; gap:8px; justify-content:center; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="logo">Neural Study OS</div>
+            <div style="display:flex;align-items:center;gap:10px">
+                <span id="ollama-status" style="font-size:0.8rem;color:var(--text-dim)">Checking AI...</span>
+                <div class="status-dot" id="status-dot"></div>
+            </div>
+        </header>
+        <nav class="sidebar">
+            <button class="nav-btn active" onclick="showTab('chat')"><span>&#128172;</span>AI Chat</button>
+            <button class="nav-btn" onclick="showTab('log')"><span>&#128221;</span>Log Session</button>
+            <button class="nav-btn" onclick="showTab('sessions')"><span>&#128203;</span>Sessions</button>
+            <button class="nav-btn" onclick="showTab('upload')"><span>&#128193;</span>Upload</button>
+            <button class="nav-btn" onclick="showTab('flashcards')"><span>&#128214;</span>Flashcards</button>
+            <button class="nav-btn" onclick="showTab('diagnostic')"><span>&#128227;</span>Diagnostic</button>
+            <button class="nav-btn" onclick="showTab('visualize')"><span>&#127909;</span>Visualize</button>
+            <button class="nav-btn" onclick="showTab('profile')"><span>&#128100;</span>Profile</button>
+        </nav>
+        <main class="main">
+            <!-- CHAT TAB -->
+            <div id="tab-chat" class="tab-content active">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-input">
+                        <input type="text" id="chat-input" placeholder="Ask about any topic..." onkeydown="if(event.key==='Enter')sendChat()">
+                        <button class="btn" onclick="sendChat()">Send</button>
+                        <label><input type="checkbox" id="use-rag" checked style="width:auto">RAG</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOG SESSION TAB -->
+            <div id="tab-log" class="tab-content">
+                <h2 style="margin-bottom:20px">Log Study Session</h2>
+                <div class="form-group"><label>Topic</label><input type="text" id="log-topic" placeholder="e.g., Electrostatics"></div>
+                <div class="form-group"><label>Subject</label><select id="log-subject"><option>Physics</option><option>Chemistry</option><option>Mathematics</option><option>Biology</option><option>English</option></select></div>
+                <div class="form-group"><label>Duration (minutes)</label><input type="number" id="log-duration" value="45" min="5"></div>
+                <div class="form-group"><label>Description</label><textarea id="log-desc" placeholder="What did you study? Were you confused about anything?"></textarea></div>
+                <div class="form-group"><label>Mood</label><select id="log-mood"><option value="neutral">Neutral</option><option value="focused">Focused</option><option value="tired">Tired</option><option value="stressed">Stressed</option><option value="motivated">Motivated</option></select></div>
+                <div class="form-group"><label>Difficulty (1-5)</label><input type="range" id="log-diff" min="1" max="5" value="3" oninput="document.getElementById('diff-val').textContent=this.value"><span id="diff-val">3</span>/5</div>
+                <button class="btn" onclick="logSession()">Log Session</button>
+                <div id="log-feedback" class="card" style="margin-top:20px;display:none"></div>
+            </div>
+
+            <!-- SESSIONS TAB -->
+            <div id="tab-sessions" class="tab-content">
+                <div class="stats-grid" id="stats-grid"></div>
+                <h3 style="margin-bottom:15px">Recent Sessions</h3>
+                <div id="sessions-list"></div>
+            </div>
+
+            <!-- UPLOAD TAB -->
+            <div id="tab-upload" class="tab-content">
+                <h2 style="margin-bottom:20px">Upload Study Materials</h2>
+                <div class="card">
+                    <h3 style="margin-bottom:10px">Upload PDF</h3>
+                    <input type="text" id="upload-name" placeholder="Source name (optional)" style="margin-bottom:10px">
+                    <input type="file" id="upload-file" accept=".pdf" style="margin-bottom:10px">
+                    <button class="btn" onclick="uploadPDF()">Upload & Process</button>
+                    <div id="upload-result" style="margin-top:10px"></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:10px">YouTube Video</h3>
+                    <input type="text" id="yt-url" placeholder="Paste YouTube URL" style="margin-bottom:10px">
+                    <button class="btn" onclick="uploadYouTube()">Process Video</button>
+                    <div id="yt-result" style="margin-top:10px"></div>
+                </div>
+            </div>
+
+            <!-- FLASHCARDS TAB -->
+            <div id="tab-flashcards" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-val" id="sr-total">0</div><div class="stat-label">Total Cards</div></div>
+                    <div class="stat-card"><div class="stat-val" id="sr-due">0</div><div class="stat-label">Due Today</div></div>
+                    <div class="stat-card"><div class="stat-val" id="sr-mastered">0</div><div class="stat-label">Mastered</div></div>
+                    <div class="stat-card"><div class="stat-val" id="sr-percent">0%</div><div class="stat-label">Mastery</div></div>
+                </div>
+                <div class="form-group" style="display:flex;gap:10px;align-items:flex-end">
+                    <div style="flex:1"><label>Topic</label><input type="text" id="fc-topic"></div>
+                    <div style="flex:2"><label>Content (question on front, answer on back)</label><input type="text" id="fc-content"></div>
+                    <button class="btn" onclick="addFlashcard()" style="margin-bottom:0">Add</button>
+                </div>
+                <h3 style="margin:20px 0 10px">Due Cards</h3>
+                <div id="flashcards-list"></div>
+            </div>
+
+            <!-- DIAGNOSTIC TAB -->
+            <div id="tab-diagnostic" class="tab-content">
+                <h2 style="margin-bottom:20px">Diagnostic Quiz</h2>
+                <div class="form-group" style="display:flex;gap:10px;align-items:flex-end">
+                    <input type="text" id="diag-topic" placeholder="Topic (e.g., Rotational Motion)" style="flex:1">
+                    <button class="btn" onclick="generateDiagnostic()" style="margin-bottom:0">Generate Quiz</button>
+                </div>
+                <div id="quiz-container"></div>
+                <div id="diag-result" class="card" style="margin-top:20px;display:none"></div>
+            </div>
+
+            <!-- VISUALIZE TAB -->
+            <div id="tab-visualize" class="tab-content">
+                <h2 style="margin-bottom:20px">Math Visualizations</h2>
+                <div class="stats-grid">
+                    <button class="btn" onclick="visualize('derivative')">Derivative</button>
+                    <button class="btn" onclick="visualize('wave')">Wave Motion</button>
+                    <button class="btn" onclick="visualize('projectile')">Projectile</button>
+                    <button class="btn" onclick="visualize('torque')">Torque</button>
+                </div>
+                <div id="viz-result" class="card"></div>
+                <div style="margin-top:20px">
+                    <h3 style="margin-bottom:10px">External Tools</h3>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <a href="https://phet.colorado.edu" target="_blank" class="btn btn-secondary">PhET Sims</a>
+                        <a href="https://www.geogebra.org" target="_blank" class="btn btn-secondary">GeoGebra</a>
+                        <a href="https://www.desmos.com" target="_blank" class="btn btn-secondary">Desmos</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROFILE TAB -->
+            <div id="tab-profile" class="tab-content">
+                <h2 style="margin-bottom:20px">Your Cognitive Profile</h2>
+                <div id="profile-data"></div>
+            </div>
+        </main>
+
+        <!-- RIGHT PANEL -->
+        <aside class="panel">
+            <div class="panel-title">Quick Stats</div>
+            <div id="quick-stats"></div>
+            <div class="panel-title" style="margin-top:20px">Due Reviews</div>
+            <div id="due-reviews"></div>
+        </aside>
+    </div>
+
+    <script>
+        const API = '/api';
+        let currentQuiz = null;
+        let chatHistory = [];
+
+        // Tab switching
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            event.target.closest('.nav-btn').classList.add('active');
+            if (name === 'sessions') loadSessions();
+            if (name === 'flashcards') loadFlashcards();
+            if (name === 'profile') loadProfile();
+        }
+
+        // Check Ollama status
+        async function checkOllama() {
+            try {
+                const r = await fetch(API + '/ollama/status');
+                const d = await r.json();
+                const el = document.getElementById('ollama-status');
+                const dot = document.getElementById('status-dot');
+                if (d.status === 'running') {
+                    el.textContent = 'AI: ' + d.models.join(', ');
+                    el.style.color = 'var(--success)';
+                    dot.style.background = 'var(--success)';
+                } else {
+                    el.textContent = 'AI offline - run: ollama pull llama3.2:3b';
+                    dot.style.background = 'var(--error)';
+                }
+            } catch (e) {
+                document.getElementById('ollama-status').textContent = 'Backend not running';
+                document.getElementById('status-dot').style.background = 'var(--error)';
+            }
+        }
+
+        // Send chat message
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            const useRag = document.getElementById('use-rag').checked;
+            input.value = '';
+            addMsg(msg, 'user');
+            try {
+                const r = await fetch(API + '/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: msg, use_rag: useRag})
+                });
+                const d = await r.json();
+                addMsg(d.response, 'bot');
+            } catch (e) {
+                addMsg('Error: Backend not responding. Run python main.py first.', 'bot');
+            }
+        }
+
+        function addMsg(text, role) {
+            const div = document.createElement('div');
+            div.className = 'msg msg-' + role;
+            div.textContent = text;
+            const container = document.getElementById('chat-messages');
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Log session
+        async function logSession() {
+            const data = {
+                topic: document.getElementById('log-topic').value,
+                subject: document.getElementById('log-subject').value,
+                duration: parseInt(document.getElementById('log-duration').value),
+                description: document.getElementById('log-desc').value,
+                mood: document.getElementById('log-mood').value,
+                difficulty: parseInt(document.getElementById('log-diff').value)
+            };
+            try {
+                const r = await fetch(API + '/session/log', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const d = await r.json();
+                const fb = document.getElementById('log-feedback');
+                fb.style.display = 'block';
+                let html = '<h4>Feedback</h4>';
+                if (d.suggestions && d.suggestions.length) {
+                    html += '<p><strong>Suggestions:</strong></p><ul>';
+                    d.suggestions.forEach(s => html += '<li>' + s + '</li>');
+                    html += '</ul>';
+                }
+                if (d.next_steps && d.next_steps.length) {
+                    html += '<p><strong>Next steps:</strong></p><ul>';
+                    d.next_steps.forEach(s => html += '<li>' + s + '</li>');
+                    html += '</ul>';
+                }
+                if (d.struggle_detected) {
+                    html += '<p class="badge badge-warning">Struggle detected!</p>';
+                }
+                fb.innerHTML = html;
+            } catch (e) {
+                alert('Error: ' + e);
+            }
+        }
+
+        // Load sessions
+        async function loadSessions() {
+            try {
+                const r = await fetch(API + '/sessions?days=30');
+                const d = await r.json();
+                // Stats
+                let sg = '<div class="stat-card"><div class="stat-val">' + (d.streak.current_streak || 0) + '</div><div class="stat-label">Day Streak</div></div>';
+                sg += '<div class="stat-card"><div class="stat-val">' + (d.sessions ? d.sessions.length : 0) + '</div><div class="stat-label">Sessions</div></div>';
+                document.getElementById('stats-grid').innerHTML = sg;
+                // Quick stats panel
+                let qs = '<div style="font-size:0.85rem;line-height:1.8">';
+                if (d.distribution) {
+                    for (const [sub, info] of Object.entries(d.distribution)) {
+                        qs += '<div>' + sub + ': ' + info.minutes + ' min</div>';
+                    }
+                }
+                qs += '</div>';
+                document.getElementById('quick-stats').innerHTML = qs;
+                // Sessions list
+                let list = '';
+                if (d.sessions && d.sessions.length) {
+                    d.sessions.forEach(s => {
+                        list += '<div class="session-item"><div class="session-info"><strong>' + s.topic + '</strong><br><span class="session-time">' + s.subject + ' | ' + s.duration_minutes + ' min</span></div>';
+                        list += '<span class="badge badge-primary">' + s.mood + '</span></div>';
+                    });
+                } else {
+                    list = '<p style="color:var(--text-dim);text-align:center">No sessions yet. Log your first study session!</p>';
+                }
+                document.getElementById('sessions-list').innerHTML = list;
+            } catch (e) {}
+        }
+
+        // Upload PDF
+        async function uploadPDF() {
+            const file = document.getElementById('upload-file').files[0];
+            if (!file) { alert('Select a file'); return; }
+            const fd = new FormData();
+            fd.append('file', file);
+            document.getElementById('upload-result').textContent = 'Processing...';
+            try {
+                const r = await fetch(API + '/upload/pdf', {method: 'POST', body: fd});
+                const d = await r.json();
+                document.getElementById('upload-result').textContent = d.message || JSON.stringify(d);
+            } catch (e) {
+                document.getElementById('upload-result').textContent = 'Error: ' + e;
+            }
+        }
+
+        // Upload YouTube
+        async function uploadYouTube() {
+            const url = document.getElementById('yt-url').value;
+            if (!url) { alert('Enter URL'); return; }
+            document.getElementById('yt-result').textContent = 'Processing (this may take a while)...';
+            try {
+                const r = await fetch(API + '/upload/youtube', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: url})
+                });
+                const d = await r.json();
+                document.getElementById('yt-result').textContent = d.title ? 'Processed: ' + d.title : JSON.stringify(d);
+            } catch (e) {
+                document.getElementById('yt-result').textContent = 'Error: ' + e;
+            }
+        }
+
+        // Flashcards
+        async function loadFlashcards() {
+            try {
+                const r = await fetch(API + '/sr/cards');
+                const d = await r.json();
+                document.getElementById('sr-total').textContent = d.stats.total_cards || 0;
+                document.getElementById('sr-due').textContent = d.stats.due_today || 0;
+                document.getElementById('sr-mastered').textContent = d.stats.mastered || 0;
+                document.getElementById('sr-percent').textContent = (d.stats.mastery_percent || 0) + '%';
+                // Due reviews panel
+                let dr = '';
+                if (d.due && d.due.length) {
+                    d.due.forEach(c => {
+                        dr += '<div class="flashcard" data-id="' + c.id + '">';
+                        dr += '<div class="flashcard-q">' + c.content + '</div>';
+                        dr += '<div class="flashcard-a">Topic: ' + c.topic + '</div>';
+                        dr += '<div class="flashcard-actions">';
+                        dr += '<button class="btn btn-sm btn-secondary" onclick="toggleCard(this)">Show</button>';
+                        dr += '<button class="btn btn-sm" onclick="rateCard(' + c.id + ',1)" style="background:#ef4444">Again</button>';
+                        dr += '<button class="btn btn-sm" onclick="rateCard(' + c.id + ',3)" style="background:#f59e0b">Good</button>';
+                        dr += '<button class="btn btn-sm" onclick="rateCard(' + c.id + ',5)" style="background:#22c55e">Easy</button>';
+                        dr += '</div></div>';
+                    });
+                } else {
+                    dr = '<p style="color:var(--text-dim);text-align:center">No cards due today!</p>';
+                }
+                document.getElementById('flashcards-list').innerHTML = dr;
+                document.getElementById('due-reviews').innerHTML = '<div style="font-size:0.85rem">' + (d.stats.due_today || 0) + ' cards due</div>';
+            } catch (e) {}
+        }
+
+        function toggleCard(btn) {
+            btn.closest('.flashcard').classList.toggle('revealed');
+            btn.textContent = btn.closest('.flashcard').classList.contains('revealed') ? 'Hide' : 'Show';
+        }
+
+        async function addFlashcard() {
+            const topic = document.getElementById('fc-topic').value;
+            const content = document.getElementById('fc-content').value;
+            if (!topic || !content) { alert('Fill both fields'); return; }
+            try {
+                await fetch(API + '/sr/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({topic: topic, content: content})
+                });
+                document.getElementById('fc-topic').value = '';
+                document.getElementById('fc-content').value = '';
+                loadFlashcards();
+            } catch (e) { alert('Error'); }
+        }
+
+        async function rateCard(id, quality) {
+            try {
+                await fetch(API + '/sr/review', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({card_id: id, quality: quality})
+                });
+                loadFlashcards();
+            } catch (e) { alert('Error'); }
+        }
+
+        // Diagnostic
+        async function generateDiagnostic() {
+            const topic = document.getElementById('diag-topic').value;
+            if (!topic) { alert('Enter topic'); return; }
+            document.getElementById('quiz-container').innerHTML = 'Generating quiz...';
+            try {
+                const r = await fetch(API + '/diagnostic/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({topic: topic})
+                });
+                const d = await r.json();
+                currentQuiz = d;
+                if (d.error) {
+                    document.getElementById('quiz-container').innerHTML = '<p style="color:var(--error)">' + d.error + '</p><pre>' + d.raw + '</pre>';
+                    return;
+                }
+                let html = '<h3>' + topic + '</h3>';
+                if (d.questions && d.questions.length) {
+                    d.questions.forEach((q, i) => {
+                        html += '<div class="card" data-qid="' + q.id + '">';
+                        html += '<span class="badge badge-primary" style="margin-bottom:8px">' + q.level + '</span>';
+                        html += '<p style="margin-bottom:10px"><strong>Q' + (i+1) + ':</strong> ' + q.question + '</p>';
+                        if (q.options) {
+                            q.options.forEach(opt => {
+                                html += '<label class="quiz-option"><input type="radio" name="q' + q.id + '" value="' + opt + '" style="width:auto;margin-right:8px"> ' + opt + '</label>';
+                            });
+                        }
+                        html += '</div>';
+                    });
+                    html += '<button class="btn" onclick="submitDiagnostic()" style="margin-top:15px">Submit Answers</button>';
+                }
+                document.getElementById('quiz-container').innerHTML = html;
+            } catch (e) {
+                document.getElementById('quiz-container').innerHTML = 'Error: ' + e;
+            }
+        }
+
+        async function submitDiagnostic() {
+            if (!currentQuiz || !currentQuiz.questions) return;
+            const answers = {};
+            currentQuiz.questions.forEach(q => {
+                const sel = document.querySelector('input[name="q' + q.id + '"]:checked');
+                if (sel) answers[q.id] = sel.value;
+            });
+            try {
+                const r = await fetch(API + '/diagnostic/submit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({topic: currentQuiz.topic || document.getElementById('diag-topic').value, answers: answers})
+                });
+                const d = await r.json();
+                const res = document.getElementById('diag-result');
+                res.style.display = 'block';
+                let html = '<h3>Results</h3>';
+                html += '<div class="stat-val" style="font-size:2.5rem">' + Math.round(d.score) + '%</div>';
+                html += '<p>Level: <span class="badge badge-' + (d.level==='Advanced'?'success':d.level==='Intermediate'?'warning':'error') + '">' + d.level + '</span></p>';
+                html += '<p>' + d.correct + '/' + d.total + ' correct</p>';
+                if (d.ai_feedback) {
+                    html += '<div style="margin-top:15px;padding:15px;background:var(--bg3);border-radius:8px"><pre style="white-space:pre-wrap;font-family:inherit">' + d.ai_feedback + '</pre></div>';
+                }
+                res.innerHTML = html;
+            } catch (e) { alert('Error: ' + e); }
+        }
+
+        // Visualize
+        async function visualize(type) {
+            document.getElementById('viz-result').innerHTML = 'Generating...';
+            try {
+                const r = await fetch(API + '/visualize', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({type: type})
+                });
+                const d = await r.json();
+                document.getElementById('viz-result').innerHTML = '<pre style="white-space:pre-wrap">' + JSON.stringify(d.result, null, 2) + '</pre>';
+            } catch (e) {
+                document.getElementById('viz-result').innerHTML = 'Error: ' + e;
+            }
+        }
+
+        // Profile
+        async function loadProfile() {
+            try {
+                const r = await fetch(API + '/profile');
+                const d = await r.json();
+                let html = '<div class="card">';
+                for (const [k, v] of Object.entries(d)) {
+                    if (k !== 'id') {
+                        html += '<div style="margin-bottom:8px"><strong style="color:var(--primary)">' + k.replace(/_/g,' ').toUpperCase() + '</strong>: ' + v + '</div>';
+                    }
+                }
+                html += '</div>';
+                document.getElementById('profile-data').innerHTML = html;
+            } catch (e) {}
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', function() {
+            checkOllama();
+            loadSessions();
+            loadFlashcards();
+        });
+    </script>
+</body>
+</html>
