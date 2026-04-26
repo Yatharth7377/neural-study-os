@@ -1,0 +1,42 @@
+{
+  "name": "neural-study-os",
+  "version": "1.0.0",
+  "description": "Local AI-powered neural study system with RAG, spaced repetition, and cognitive mapping",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "python main.py & electron .",
+    "start-backend": "python main.py",
+    "start-frontend": "electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "build-linux": "electron-builder --linux",
+    "setup": "python scripts/setup.py && ollama pull llama3.2:3b"
+  },
+  "author": "Yatharth7377",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.neuralstudy.os",
+    "productName": "Neural Study OS",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "portable",
+      "icon": "static/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "static/icon.png"
+    },
+    "files": [
+      "static/**/*",
+      "main.py",
+      "requirements.txt",
+      "scripts/**/*"
+    ]
+  }
+}
